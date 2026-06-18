@@ -9,6 +9,7 @@ type FilterType =
   | 'criticas'
   | 'altas'
   | 'sin_movimiento'
+  | 'saldo_excesivo'
   | 'consumo_inmediato'
   | 'desaparecidos'
   | 'nuevos'
@@ -73,6 +74,9 @@ export function ResultsTable({ items }: Props) {
       case 'ingresos_excesivos':
         list = list.filter((i) => i.alertas.some((a) => a.tipo === 'ingresos_excesivos' || a.tipo === 'ingreso_sin_consumo'));
         break;
+      case 'saldo_excesivo':
+        list = list.filter((i) => i.alertas.some((a) => a.tipo === 'saldo_excesivo'));
+        break;
       case 'saldo_negativo':
         list = list.filter((i) => i.alertas.some((a) => a.tipo === 'saldo_negativo'));
         break;
@@ -136,6 +140,7 @@ export function ResultsTable({ items }: Props) {
     { key: 'arrastre', label: 'Arrastre', count: items.filter((i) => i.alertas.some((a) => a.tipo === 'arrastre_saldo')).length },
     { key: 'sin_movimiento', label: 'Sin movimiento', count: items.filter((i) => i.alertas.some((a) => a.tipo === 'sin_movimiento')).length },
     { key: 'ingresos_excesivos', label: 'Ing. excesivos', count: items.filter((i) => i.alertas.some((a) => a.tipo === 'ingresos_excesivos' || a.tipo === 'ingreso_sin_consumo')).length },
+    { key: 'saldo_excesivo', label: 'Saldo excesivo', count: items.filter((i) => i.alertas.some((a) => a.tipo === 'saldo_excesivo')).length },
     { key: 'consumo_inmediato', label: 'Cons. inmediato', count: items.filter((i) => i.alertas.some((a) => a.tipo === 'consumo_inmediato_con_saldo')).length },
     { key: 'saldo_negativo', label: 'Saldo negativo', count: items.filter((i) => i.alertas.some((a) => a.tipo === 'saldo_negativo')).length },
     { key: 'desaparecidos', label: 'Desaparecidos', count: items.filter((i) => i.estadoComparativo === 'solo_mes_anterior').length },
