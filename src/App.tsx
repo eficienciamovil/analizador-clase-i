@@ -64,14 +64,11 @@ export default function App() {
       <header className="bg-slate-900 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex flex-col items-center">
-              <img
-                src="/escudo.png"
-                alt="Escudo Dir. Intendencia"
-                className="h-10 w-auto object-contain"
-              />
-              <span className="text-[9px] text-slate-500 leading-tight mt-0.5">© Hormaeche</span>
-            </div>
+            <img
+              src="/escudo.png"
+              alt="Escudo Dir. Intendencia"
+              className="h-10 w-auto object-contain"
+            />
             <div>
               <h1 className="text-sm font-bold leading-tight tracking-wide">
                 Analizador de Estados de Abastecimiento
@@ -79,6 +76,7 @@ export default function App() {
               <p className="text-xs text-slate-400 leading-tight">
                 Efectos Clase I — Ejército Argentino
               </p>
+              <p className="text-[9px] text-slate-500 leading-tight mt-0.5">© My Hormaeche</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
