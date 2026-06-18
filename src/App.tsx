@@ -76,7 +76,6 @@ export default function App() {
               <p className="text-xs text-slate-400 leading-tight">
                 Efectos Clase I — Ejército Argentino
               </p>
-              <p className="text-[9px] text-slate-500 leading-tight mt-0.5">© My Hormaeche</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -233,6 +232,7 @@ export default function App() {
             Herramienta de análisis de consistencia logística — Uso interno.
             Los resultados son de carácter preliminar y no reemplazan el criterio del responsable logístico.
           </p>
+          <p className="text-[10px] text-slate-400 text-center mt-1">© Mayor Hormaeche</p>
         </div>
       </footer>
     </div>
