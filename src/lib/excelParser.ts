@@ -98,17 +98,41 @@ function detectarPeriodo(rows: unknown[][]): string | undefined {
   return undefined;
 }
 
-function detectarUnidad(rows: unknown[][]): string | undefined {
-  for (let i = 0; i < Math.min(rows.length, 15); i++) {
+function detectarUnidades(rows: unknown[][]): {
+  unidadAnalizada?: string;
+  unidadAuditora?: string;
+} {
+  let unidadAuditora: string | undefined;
+  let unidadAnalizada: string | undefined;
+  let titleFound = false;
+
+  for (let i = 0; i < Math.min(rows.length, 20); i++) {
     const row = rows[i];
     if (!row) continue;
-    for (const cell of row) {
-      const str = String(cell ?? '');
-      const match = str.match(/U\d{4}/);
-      if (match) return match[0];
+    const rowStr = row.map((c) => String(c ?? '')).join(' ').toLowerCase();
+
+    if (rowStr.includes('estado de abastecimiento')) {
+      titleFound = true;
+      continue;
     }
+
+    for (const cell of row) {
+      const str = String(cell ?? '').trim();
+      if (!str) continue;
+      // Match "U\d{4}" optionally followed by " - name"
+      const match = str.match(/U\d{4}(?:\s*[-–]\s*[^\n\r]+)?/);
+      if (match) {
+        const val = match[0].replace(/\s+/g, ' ').trim();
+        if (!titleFound && !unidadAuditora) {
+          unidadAuditora = val;
+        } else if (titleFound && !unidadAnalizada) {
+          unidadAnalizada = val;
+        }
+      }
+    }
+    if (unidadAuditora && unidadAnalizada) break;
   }
-  return undefined;
+  return { unidadAnalizada, unidadAuditora };
 }
 
 export async function parsearArchivoExcel(archivo: File): Promise<ImportResult> {
@@ -140,7 +164,7 @@ export async function parsearArchivoExcel(archivo: File): Promise<ImportResult> 
   });
 
   const periodoDetectado = detectarPeriodo(rawRows);
-  const unidadDetectada = detectarUnidad(rawRows);
+  const { unidadAnalizada: unidadDetectada, unidadAuditora } = detectarUnidades(rawRows);
 
   const encabezadoDetectado = detectarEncabezado(rawRows);
   if (!encabezadoDetectado) {
@@ -153,6 +177,7 @@ export async function parsearArchivoExcel(archivo: File): Promise<ImportResult> 
       nombreArchivo: archivo.name,
       periodoDetectado,
       unidadDetectada,
+      unidadAuditora,
       errores,
       advertencias,
     };
@@ -235,6 +260,7 @@ export async function parsearArchivoExcel(archivo: File): Promise<ImportResult> 
     nombreArchivo: archivo.name,
     periodoDetectado,
     unidadDetectada,
+    unidadAuditora,
     errores,
     advertencias,
   };

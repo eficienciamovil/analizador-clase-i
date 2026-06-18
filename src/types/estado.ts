@@ -19,7 +19,8 @@ export type ImportResult = {
   totalFilas: number;
   nombreArchivo: string;
   periodoDetectado?: string;
-  unidadDetectada?: string;
+  unidadDetectada?: string;   // unidad analizada (ej: U3479 - Dir Icia Oper)
+  unidadAuditora?: string;    // organismo auditor (ej: U2330 - Dir Gral Intendencia)
   errores: string[];
   advertencias: string[];
 };

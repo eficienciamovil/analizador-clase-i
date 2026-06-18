@@ -55,12 +55,14 @@ export function generarPDF(
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(71, 85, 105);
 
-  const unidad = importAnterior.unidadDetectada ?? importPosterior.unidadDetectada ?? 'N/D';
+  const unidadAnalizada = importAnterior.unidadDetectada ?? importPosterior.unidadDetectada ?? 'N/D';
+  const unidadAuditora = importAnterior.unidadAuditora ?? importPosterior.unidadAuditora ?? 'N/D';
   const periodoAnt = importAnterior.periodoDetectado ?? 'Mes anterior';
   const periodoPost = importPosterior.periodoDetectado ?? 'Mes posterior';
 
   const infoLines = [
-    ['Unidad analizada:', unidad],
+    ['Unidad analizada:', unidadAnalizada],
+    ['Organismo auditor:', unidadAuditora],
     ['Período anterior:', periodoAnt],
     ['Período posterior:', periodoPost],
     ['Archivo mes anterior:', importAnterior.nombreArchivo],
@@ -194,14 +196,15 @@ export function generarPDF(
           .filter((a) => a.severidad === 'critica')
           .map((a) => [
             item.codigo,
-            item.descripcion.substring(0, 35),
+            item.descripcion,
             TIPO_ALERTA_LABELS[a.tipo] ?? a.tipo,
-            a.descripcion.substring(0, 60),
+            a.descripcion,
           ])
       ),
       margin: { left: margin, right: margin },
-      styles: { fontSize: 7.5, cellPadding: 2 },
+      styles: { fontSize: 7.5, cellPadding: 3, minCellHeight: 8, overflow: 'linebreak' },
       headStyles: { fillColor: [185, 28, 28], textColor: 255, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 14 }, 1: { cellWidth: 42 }, 2: { cellWidth: 32 }, 3: { cellWidth: contentW - 88 } },
       theme: 'striped',
     });
     y = (doc as any).lastAutoTable.finalY + 8;
@@ -225,14 +228,15 @@ export function generarPDF(
           .filter((a) => a.severidad === 'alta')
           .map((a) => [
             item.codigo,
-            item.descripcion.substring(0, 35),
+            item.descripcion,
             TIPO_ALERTA_LABELS[a.tipo] ?? a.tipo,
-            a.descripcion.substring(0, 60),
+            a.descripcion,
           ])
       ),
       margin: { left: margin, right: margin },
-      styles: { fontSize: 7.5, cellPadding: 2 },
+      styles: { fontSize: 7.5, cellPadding: 3, minCellHeight: 8, overflow: 'linebreak' },
       headStyles: { fillColor: [194, 65, 12], textColor: 255, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 14 }, 1: { cellWidth: 42 }, 2: { cellWidth: 32 }, 3: { cellWidth: contentW - 88 } },
       theme: 'striped',
     });
     y = (doc as any).lastAutoTable.finalY + 8;
@@ -260,15 +264,16 @@ export function generarPDF(
       head: [['Código', 'Descripción', 'Umd', 'Ingresos', 'Egresos', 'Ratio']],
       body: conRatio.map((i) => [
         i.codigo,
-        i.descripcion.substring(0, 30),
+        i.descripcion,
         i.umd,
         fmt(i.itemMesPosterior?.ingresos),
         fmt(i.itemMesPosterior?.egresos),
         fmtRatio(i.ratio_ingreso_egreso),
       ]),
       margin: { left: margin, right: margin },
-      styles: { fontSize: 8, cellPadding: 2 },
+      styles: { fontSize: 8, cellPadding: 3, minCellHeight: 8, overflow: 'linebreak' },
       headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 14 }, 1: { cellWidth: 55 }, 2: { cellWidth: 12 }, 3: { cellWidth: 25, halign: 'right' }, 4: { cellWidth: 25, halign: 'right' }, 5: { cellWidth: 20, halign: 'right' } },
       theme: 'striped',
     });
     y = (doc as any).lastAutoTable.finalY + 8;
@@ -293,7 +298,7 @@ export function generarPDF(
       head: [['Código', 'Descripción', 'Umd', 'Saldo ant.', 'Ingresos', 'Egresos', 'Saldo pasa']],
       body: conSaldo.map((i) => [
         i.codigo,
-        i.descripcion.substring(0, 28),
+        i.descripcion,
         i.umd,
         fmt(i.itemMesPosterior?.saldoMesAnterior),
         fmt(i.itemMesPosterior?.ingresos),
@@ -301,8 +306,9 @@ export function generarPDF(
         fmt(i.itemMesPosterior?.saldoQuePasa),
       ]),
       margin: { left: margin, right: margin },
-      styles: { fontSize: 7.5, cellPadding: 2 },
+      styles: { fontSize: 7.5, cellPadding: 3, minCellHeight: 8, overflow: 'linebreak' },
       headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 14 }, 1: { cellWidth: 45 }, 2: { cellWidth: 10 }, 3: { cellWidth: 25, halign: 'right' }, 4: { cellWidth: 22, halign: 'right' }, 5: { cellWidth: 22, halign: 'right' }, 6: { cellWidth: 25, halign: 'right' } },
       theme: 'striped',
     });
     y = (doc as any).lastAutoTable.finalY + 8;
@@ -326,13 +332,14 @@ export function generarPDF(
       head: [['Código', 'Descripción', 'Umd', 'Saldo que pasa']],
       body: sinMov.map((i) => [
         i.codigo,
-        i.descripcion.substring(0, 40),
+        i.descripcion,
         i.umd,
         fmt(i.itemMesPosterior?.saldoQuePasa),
       ]),
       margin: { left: margin, right: margin },
-      styles: { fontSize: 8, cellPadding: 2 },
+      styles: { fontSize: 8, cellPadding: 3, minCellHeight: 8, overflow: 'linebreak' },
       headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 14 }, 1: { cellWidth: 110 }, 2: { cellWidth: 12 }, 3: { cellWidth: 35, halign: 'right' } },
       theme: 'striped',
     });
     y = (doc as any).lastAutoTable.finalY + 8;
