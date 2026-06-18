@@ -2,6 +2,25 @@ import type { EstadoItem } from '../types/estado';
 import type { Alerta } from '../types/alertas';
 import type { ConfiguracionApp } from '../types/scoring';
 
+// Keywords that imply refrigerated storage
+const REFRIGERADOS_KEYWORDS = [
+  'carne', 'picada', 'pollo', 'jamon', 'jamón', 'queso', 'manteca',
+  'ricota', 'leche', 'yogur', 'panceta', 'bondiola', 'cerdo',
+  'bife', 'lomo', 'nalga', 'paleta', 'asado', 'vacío', 'vacio',
+  'peceto', 'matambre', 'cuadril', 'roast', 'hamburguesa', 'chorizo',
+];
+
+export function esRefrigerado(descNorm: string): boolean {
+  return REFRIGERADOS_KEYWORDS.some((k) => descNorm.includes(k));
+}
+
+// Estimate meses de stock based on ratio saldo/egresos
+function mesesDeStock(ratio: number): string {
+  if (ratio < 1) return 'menos de 1 mes';
+  if (ratio === 1) return '1 mes';
+  return `${ratio.toFixed(1)} meses`;
+}
+
 export function validarSaldoNegativo(item: EstadoItem): Alerta | null {
   if (item.saldoQuePasa < -0.001) {
     return {
@@ -24,10 +43,7 @@ export function validarConsumoInmediato(
   const descNorm = item.descripcionNormalizada;
   const esConsumoInmediato = config.productosConsumoInmediato.some((p) =>
     descNorm.includes(
-      p
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
+      p.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
     )
   );
 
@@ -98,29 +114,48 @@ export function validarSaldoExcesivo(
   item: EstadoItem,
   config: ConfiguracionApp
 ): Alerta | null {
+  const refrigerado = esRefrigerado(item.descripcionNormalizada);
+
+  // Case 1: no consumption at all
   if (item.egresos === 0 && item.saldoQuePasa > 0) {
+    const msg = refrigerado
+      ? `Stock inmovilizado de producto REFRIGERADO: ${item.saldoQuePasa.toFixed(3)} ${item.umd} sin egresos. Requiere verificación urgente de capacidad frigorífica.`
+      : `Stock inmovilizado: ${item.saldoQuePasa.toFixed(3)} ${item.umd} sin egresos en el mes.`;
     return {
       tipo: 'saldo_excesivo',
-      severidad: 'media',
-      descripcion: `Stock inmovilizado: ${item.saldoQuePasa.toFixed(3)} ${item.umd} sin egresos en el mes.`,
+      severidad: refrigerado ? 'alta' : 'media',
+      descripcion: msg,
       valorDetectado: item.saldoQuePasa,
       valorEsperado: 'egresos > 0',
-      recomendacion:
-        'Evaluar si el saldo remanente supera la necesidad normal y si corresponde ajustar pedidos futuros.',
+      recomendacion: refrigerado
+        ? `Verificar capacidad de almacenamiento frigorífico disponible para ${item.saldoQuePasa.toFixed(3)} ${item.umd}. Evaluar condición del producto y posible vencimiento.`
+        : 'Evaluar si el saldo remanente supera la necesidad normal y si corresponde ajustar pedidos futuros.',
     };
   }
 
+  // Case 2: some consumption but very low relative to stock
   if (item.egresos > 0) {
     const ratio = item.saldoQuePasa / item.egresos;
     if (ratio >= config.umbralSaldoEgresoRatio) {
+      // Severity escalation: > 6 months = alta, > 12 months = critica
+      const severidad = ratio >= 12 ? 'critica' : ratio >= 6 ? 'alta' : 'media';
+
+      const capacidadMsg = refrigerado
+        ? ` PRODUCTO REFRIGERADO: verificar si existe capacidad frigorífica para almacenar ${item.saldoQuePasa.toFixed(3)} ${item.umd}.`
+        : '';
+
       return {
         tipo: 'saldo_excesivo',
-        severidad: ratio >= 5 ? 'alta' : 'media',
-        descripcion: `Saldo que pasa representa ${ratio.toFixed(1)} veces el egreso mensual.`,
+        severidad,
+        descripcion:
+          `Saldo equivale a ${mesesDeStock(ratio)} de consumo al ritmo actual ` +
+          `(saldo: ${item.saldoQuePasa.toFixed(3)} ${item.umd} / egreso mensual: ${item.egresos.toFixed(3)} ${item.umd}).` +
+          capacidadMsg,
         valorDetectado: ratio,
-        valorEsperado: `< ${config.umbralSaldoEgresoRatio}`,
-        recomendacion:
-          'Evaluar si el saldo remanente supera la necesidad normal del organismo y si corresponde ajustar pedidos futuros.',
+        valorEsperado: `< ${config.umbralSaldoEgresoRatio} meses`,
+        recomendacion: refrigerado
+          ? `Verificar urgentemente dónde y cómo se almacenan ${item.saldoQuePasa.toFixed(3)} ${item.umd}. Controlar capacidad frigorífica, condición del producto y fecha de vencimiento. Evaluar ajuste de pedidos.`
+          : 'Evaluar si el saldo remanente supera la necesidad normal del organismo. Verificar lugar de almacenamiento, capacidad disponible y ajustar pedidos futuros.',
       };
     }
   }
